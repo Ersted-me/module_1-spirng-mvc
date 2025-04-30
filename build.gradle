@@ -58,7 +58,3 @@ tasks.named('test') {
 bootJar {
     mainClass = 'ru.ersted.module_1spirngmvc.Module1SpirngMvcApplication'
 }
-
-tasks.withType(JavaExec) {
-    systemProperty 'spring.profiles.active', 'tomcat'
-}

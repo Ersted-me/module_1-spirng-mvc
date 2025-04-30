@@ -1,10 +1,15 @@
 spring:
   application:
     name: module_1-spirng-mvc
+
+  profiles:
+    default: tomcat
+
   datasource:
     username: postgres
     password: postgres
     url: jdbc:postgresql://localhost:5432/postgres
+
   jpa:
     hibernate:
       ddl-auto: validate

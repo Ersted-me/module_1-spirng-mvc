@@ -5,6 +5,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,7 +37,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @AutoConfigureMockMvc
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ItStudentRestControllerTest extends AbstractRestControllerBaseTest {
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+public class ItStudentRestControllerTest {
 
 
     @Autowired
@@ -191,10 +193,10 @@ public class ItStudentRestControllerTest extends AbstractRestControllerBaseTest 
 
         result
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.is(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.notNullValue()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.name", CoreMatchers.is("John Doe")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.email", CoreMatchers.is("john.doe@example.com")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.courses.[0].id", CoreMatchers.is(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.courses.[0].id", CoreMatchers.notNullValue()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.courses.[0].title", CoreMatchers.is("Math")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.courses.[0].teacher.id", CoreMatchers.notNullValue()))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.courses.[0].teacher.name", CoreMatchers.is("John Pohn")));

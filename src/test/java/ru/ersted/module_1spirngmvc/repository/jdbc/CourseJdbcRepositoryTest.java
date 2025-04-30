@@ -2,11 +2,13 @@ package ru.ersted.module_1spirngmvc.repository.jdbc;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import ru.ersted.module_1spirngmvc.config.DatabaseConfig;
 import ru.ersted.module_1spirngmvc.entity.Course;
 
 import java.util.List;
@@ -16,7 +18,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest
-@Import({CourseJdbcRepository.class})
+@Import({CourseJdbcRepository.class, DatabaseConfig.class})
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class CourseJdbcRepositoryTest {
 

@@ -2,6 +2,7 @@ package ru.ersted.module_1spirngmvc.repository.jdbc;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @JdbcTest
 @Import({TeacherJdbcRepository.class})
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class TeacherJdbcRepositoryTest {
 
