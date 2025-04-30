@@ -1,0 +1,18 @@
+package ru.ersted.module_1spirngmvc.mapper;
+
+import org.mapstruct.Mapper;
+import ru.ersted.module_1spirngmvc.dto.course.CourseDto;
+import ru.ersted.module_1spirngmvc.dto.course.CourseShortDto;
+import ru.ersted.module_1spirngmvc.dto.course.rq.CourseCreateRq;
+import ru.ersted.module_1spirngmvc.entity.Course;
+
+@Mapper(componentModel = "spring")
+public interface CourseMapper {
+
+    CourseDto map(Course entity);
+
+    CourseShortDto mapShort(Course entity);
+
+    Course map(CourseCreateRq request);
+
+}
