@@ -1,12 +1,15 @@
 package ru.ersted.module_1spirngmvc.rest;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.ersted.module_1spirngmvc.dto.course.CourseDto;
-import ru.ersted.module_1spirngmvc.dto.teacher.TeacherDto;
-import ru.ersted.module_1spirngmvc.dto.teacher.rq.TeacherCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseDto;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherDto;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherCreateRq;
 import ru.ersted.module_1spirngmvc.service.CourseService;
 import ru.ersted.module_1spirngmvc.service.TeacherService;
 
@@ -15,7 +18,7 @@ import java.util.Collection;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("api/v1/teachers")
-public class TeacherRestController {
+public class TeacherRestControllerV1 {
 
     private final TeacherService teacherService;
     private final CourseService courseService;
@@ -33,8 +36,8 @@ public class TeacherRestController {
     }
 
     @GetMapping
-    public Collection<TeacherDto> findAll() {
-        return teacherService.findAll();
+    public Collection<TeacherDto> findAll(@PageableDefault(page = 0, size = 20) Pageable pageable) {
+        return teacherService.findAll(pageable).getContent();
     }
 
 }

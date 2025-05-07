@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.ersted.module_1spirngmvc.dto.student.rq.StudentUpdateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentUpdateRq;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,11 +42,5 @@ public class Student {
             inverseJoinColumns = @JoinColumn(name = "course_id")
     )
     private Set<Course> courses = new HashSet<>();
-
-
-    public void update(StudentUpdateRq request) {
-        this.setName(request.name());
-        this.setEmail(request.email());
-    }
 
 }

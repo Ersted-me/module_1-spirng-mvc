@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import ru.ersted.module_1spirngmvc.config.DatabaseConfig;
 import ru.ersted.module_1spirngmvc.entity.Course;
@@ -47,8 +48,10 @@ class CourseJdbcRepositoryTest {
         Long courseId = template.queryForObject("INSERT INTO course(title, teacher_id) VALUES('Some title',:teacherId) RETURNING id", Map.of("teacherId", teacherId), Long.class);
         template.update("INSERT INTO students_courses(student_id, course_id) VALUES(:studentId, :courseId)",
                 Map.of("studentId", studentId, "courseId", courseId));
+        PageRequest pageRequest = PageRequest.of(0, 20);
 
-        List<Course> courses = repository.findAll();
+
+        List<Course> courses = repository.findAll(pageRequest).getContent();
 
         assertThat(courses).hasSize(1);
 

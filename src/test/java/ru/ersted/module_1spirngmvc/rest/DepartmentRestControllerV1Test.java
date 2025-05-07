@@ -13,13 +13,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import ru.ersted.module_1spirngmvc.dto.department.DepartmentDto;
-import ru.ersted.module_1spirngmvc.dto.department.rq.DepartmentCreateRq;
-import ru.ersted.module_1spirngmvc.dto.teacher.TeacherShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentDto;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherShortDto;
 import ru.ersted.module_1spirngmvc.service.DepartmentService;
+import ru.ersted.module_1spirngmvc.util.DataUtil;
 
-@WebMvcTest(controllers = DepartmentRestController.class)
-class DepartmentRestControllerTest {
+import static ru.ersted.module_1spirngmvc.util.DataUtil.*;
+
+@WebMvcTest(controllers = DepartmentRestControllerV1.class)
+class DepartmentRestControllerV1Test {
 
     @Autowired
     private MockMvc mockMvc;
@@ -34,8 +37,8 @@ class DepartmentRestControllerTest {
     @Test
     @DisplayName("Test create department functionality")
     void givenDepartmentCreateRq_whenCreateDepartment_thenSuccessResponse() throws Exception {
-        DepartmentCreateRq rq = new DepartmentCreateRq("Computer Science");
-        DepartmentDto dto = new DepartmentDto(1L, "Computer Science", null);
+        DepartmentCreateRq rq = departmentCreateRq();
+        DepartmentDto dto = transientDepartmentDto();
 
         BDDMockito.given(departmentService.save(rq)).willReturn(dto);
 
@@ -46,7 +49,7 @@ class DepartmentRestControllerTest {
         result
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name", CoreMatchers.is("Computer Science")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name", CoreMatchers.is("Math Department")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.headOfDepartment", CoreMatchers.nullValue()));
     }
 
@@ -55,8 +58,7 @@ class DepartmentRestControllerTest {
     void givenDepartmentIdAndTeacherId_whenAssign_thenSuccessResponse() throws Exception {
         Long departmentId = 1L;
         Long teacherId = 1L;
-        TeacherShortDto teacher = new TeacherShortDto(1L, "Professor Smith");
-        DepartmentDto dto = new DepartmentDto(1L, "Computer Science", teacher);
+        DepartmentDto dto = transientFilledDepartmentDto();
 
         BDDMockito.given(departmentService.assigningHeadOfDepartment(departmentId, teacherId)).willReturn(dto);
 
@@ -65,9 +67,9 @@ class DepartmentRestControllerTest {
         result
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name", CoreMatchers.is("Computer Science")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name", CoreMatchers.is("Math Department")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.headOfDepartment.id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.headOfDepartment.name", CoreMatchers.is("Professor Smith")));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.headOfDepartment.name", CoreMatchers.is("John Toy")));
 
 
     }

@@ -4,14 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.ersted.module_1spirngmvc.dto.department.DepartmentDto;
-import ru.ersted.module_1spirngmvc.dto.department.rq.DepartmentCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentDto;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentCreateRq;
 import ru.ersted.module_1spirngmvc.service.DepartmentService;
 
 @RestController
 @RequestMapping("api/v1/departments")
 @RequiredArgsConstructor
-public class DepartmentRestController {
+public class DepartmentRestControllerV1 {
 
     private final DepartmentService departmentService;
 

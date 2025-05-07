@@ -7,27 +7,33 @@ import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import ru.ersted.module_1spirngmvc.dto.course.CourseDto;
-import ru.ersted.module_1spirngmvc.dto.course.CourseShortDto;
-import ru.ersted.module_1spirngmvc.dto.department.DepartmentShortDto;
-import ru.ersted.module_1spirngmvc.dto.student.StudentShortDto;
-import ru.ersted.module_1spirngmvc.dto.teacher.TeacherDto;
-import ru.ersted.module_1spirngmvc.dto.teacher.TeacherShortDto;
-import ru.ersted.module_1spirngmvc.dto.teacher.rq.TeacherCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseDto;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherDto;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherCreateRq;
 import ru.ersted.module_1spirngmvc.service.CourseService;
 import ru.ersted.module_1spirngmvc.service.TeacherService;
+import ru.ersted.module_1spirngmvc.util.DataUtil;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
-@WebMvcTest(controllers = TeacherRestController.class)
-class TeacherRestControllerTest {
+import static ru.ersted.module_1spirngmvc.util.DataUtil.*;
+
+@WebMvcTest(controllers = TeacherRestControllerV1.class)
+class TeacherRestControllerV1Test {
 
 
     @Autowired
@@ -45,8 +51,8 @@ class TeacherRestControllerTest {
     @Test
     @DisplayName("Test create teacher functionality")
     void givenTeacherCreateRq_whenCreate_thenSuccessResponse() throws Exception {
-        TeacherCreateRq rq = new TeacherCreateRq("Professor Smith");
-        TeacherDto dto = new TeacherDto(1L, "Professor Smith", null, null);
+        TeacherCreateRq rq = teacherCreateRq();
+        TeacherDto dto = transientTeacherDto();
 
         BDDMockito.given(teacherService.create(rq)).willReturn(dto);
 
@@ -57,7 +63,7 @@ class TeacherRestControllerTest {
         result
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name", CoreMatchers.is("Professor Smith")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name", CoreMatchers.is("John Toy")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.courses", CoreMatchers.is(Collections.emptyList())))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.department", CoreMatchers.nullValue()));
     }
@@ -67,9 +73,7 @@ class TeacherRestControllerTest {
     void givenTeacherIdAndCourseId_whenAssigningTeacherToCourse_thenSuccessResponse() throws Exception {
         Long teacherId = 1L;
         Long courseId = 1L;
-        TeacherShortDto teacher = new TeacherShortDto(1L, "Professor Smith");
-        StudentShortDto student = new StudentShortDto(1L, "John Doe");
-        CourseDto courseDto = new CourseDto(1L, "Math 101", teacher, Set.of(student));
+        CourseDto courseDto = transientFilledCourseDto();
 
         BDDMockito.given(courseService.assigningTeacher(courseId, teacherId)).willReturn(courseDto);
 
@@ -78,9 +82,9 @@ class TeacherRestControllerTest {
         result
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.title", CoreMatchers.is("Math 101")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title", CoreMatchers.is("Math")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.teacher.id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.teacher.name", CoreMatchers.is("Professor Smith")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.teacher.name", CoreMatchers.is("John Toy")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.students.[0].id", CoreMatchers.is(1)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.students.[0].name", CoreMatchers.is("John Doe")));
     }
@@ -88,22 +92,21 @@ class TeacherRestControllerTest {
     @Test
     @DisplayName("Test find all teachers functionality")
     void whenFindAll_thenSuccessResponse() throws Exception {
-        CourseShortDto course = new CourseShortDto(1L, "Math 101", null);
-        DepartmentShortDto department = new DepartmentShortDto(1L, "Computer Science");
-        TeacherDto dto = new TeacherDto(1L, "Professor Smith", Set.of(course), department);
+        TeacherDto dto = transientFilledTeacherDto();
 
-        BDDMockito.given(teacherService.findAll()).willReturn(Set.of(dto));
+        BDDMockito.given(teacherService.findAll(PageRequest.of(0, 20)))
+                .willReturn(new SliceImpl<>(List.of(dto)));
 
         ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/teachers"));
 
         result
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.[0].id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].name", CoreMatchers.is("Professor Smith")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].name", CoreMatchers.is("John Toy")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.[0].courses.[0].id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].courses.[0].title", CoreMatchers.is("Math 101")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].courses.[0].title", CoreMatchers.is("Math")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.[0].department.id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].department.name", CoreMatchers.is("Computer Science")));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].department.name", CoreMatchers.is("Math Department")));
     }
 
 }

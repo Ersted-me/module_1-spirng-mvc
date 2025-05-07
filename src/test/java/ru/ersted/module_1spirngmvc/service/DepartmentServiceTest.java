@@ -1,12 +1,13 @@
 package ru.ersted.module_1spirngmvc.service;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.ersted.module_1spirngmvc.dto.department.DepartmentDto;
-import ru.ersted.module_1spirngmvc.dto.department.rq.DepartmentCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentDto;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentCreateRq;
 import ru.ersted.module_1spirngmvc.entity.Department;
 import ru.ersted.module_1spirngmvc.entity.Teacher;
 import ru.ersted.module_1spirngmvc.exception.NotFoundException;
@@ -17,6 +18,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static ru.ersted.module_1spirngmvc.util.DataUtil.*;
 
 @ExtendWith(MockitoExtension.class)
 class DepartmentServiceTest {
@@ -35,10 +37,11 @@ class DepartmentServiceTest {
 
 
     @Test
-    void testSaveDepartment() {
-        DepartmentCreateRq departmentCreateRq = new DepartmentCreateRq("Math Department");
-        Department department = new Department(1L, "Math Department", null);
-        DepartmentDto departmentDto = new DepartmentDto(1L, "Math Department", null);
+    @DisplayName("Test save department")
+    void givenCreateRq_whenSaveDepartment_thenReturnDepartmentDto() {
+        DepartmentCreateRq departmentCreateRq = departmentCreateRq();
+        Department department = transientDepartment();
+        DepartmentDto departmentDto = transientDepartmentDto();
 
         when(departmentMapper.map(departmentCreateRq)).thenReturn(department);
         when(departmentRepository.save(department)).thenReturn(department);
@@ -55,10 +58,11 @@ class DepartmentServiceTest {
     }
 
     @Test
-    void testAssignHeadOfDepartment() {
-        Department department = new Department(1L, "Math Department", null);
-        DepartmentDto departmentDto = new DepartmentDto(1L, "Math Department", null);
-        Teacher teacher = new Teacher(1L, "John Toy",null, null);
+    @DisplayName("Test assign head of department")
+    void givenDepartmentAndTeacher_whenAssignHeadOfDepartment_thenReturnDepartmentDtoWithHeadOfDepartment() {
+        Department department = transientDepartment();
+        DepartmentDto departmentDto = transientFilledDepartmentDto();
+        Teacher teacher = transientTeacher();
 
         when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
         when(teacherService.findOrElseThrow(1L)).thenReturn(teacher);
@@ -78,7 +82,8 @@ class DepartmentServiceTest {
     }
 
     @Test
-    void testAssignHeadOfDepartmentDepartmentNotFound() {
+    @DisplayName("Test assign head of department (NOT FOUND)")
+    void givenNothing_whenAssignHeadOfDepartment_thenThrowNotFoundException() {
         when(departmentRepository.findById(1L)).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(NotFoundException.class, () -> {
@@ -94,8 +99,9 @@ class DepartmentServiceTest {
 
 
     @Test
-    void testFindDepartmentById() {
-        Department department = new Department(1L, "Math Department", null);
+    @DisplayName("Test find by id (NOT FOUND)")
+    void givenDepartment_whenFindById_thenReturnDepartmentDto() {
+        Department department = transientDepartment();
 
         when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
 
@@ -108,7 +114,8 @@ class DepartmentServiceTest {
     }
 
     @Test
-    void testFindDepartmentByIdNotFound() {
+    @DisplayName("Test find by id (NOT FOUND)")
+    void givenNothing_whenFindById_thenThrowNotFoundException() {
         when(departmentRepository.findById(1L)).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(NotFoundException.class, () -> {

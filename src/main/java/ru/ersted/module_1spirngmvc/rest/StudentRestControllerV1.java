@@ -1,14 +1,16 @@
 package ru.ersted.module_1spirngmvc.rest;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.ersted.module_1spirngmvc.dto.course.CourseDto;
-import ru.ersted.module_1spirngmvc.dto.course.CourseShortDto;
-import ru.ersted.module_1spirngmvc.dto.student.StudentDto;
-import ru.ersted.module_1spirngmvc.dto.student.rq.StudentCreateRq;
-import ru.ersted.module_1spirngmvc.dto.student.rq.StudentUpdateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentDto;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentUpdateRq;
 import ru.ersted.module_1spirngmvc.service.CourseService;
 import ru.ersted.module_1spirngmvc.service.StudentService;
 
@@ -18,7 +20,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("api/v1/students")
-public class StudentRestController {
+public class StudentRestControllerV1 {
 
     private final StudentService studentService;
     private final CourseService courseService;
@@ -60,8 +62,9 @@ public class StudentRestController {
     }
 
     @GetMapping("/{studentId}/courses")
-    public Collection<CourseShortDto> findCourses(@PathVariable Long studentId) {
-        return courseService.findAllByStudentId(studentId);
+    public Collection<CourseShortDto> findCourses(@PageableDefault(page = 0, size = 20) Pageable pageable,
+                                             @PathVariable Long studentId) {
+        return courseService.findAllByStudentId(studentId, pageable).getContent();
     }
 
 

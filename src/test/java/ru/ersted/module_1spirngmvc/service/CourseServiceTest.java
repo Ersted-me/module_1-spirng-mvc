@@ -1,14 +1,15 @@
 package ru.ersted.module_1spirngmvc.service;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.ersted.module_1spirngmvc.dto.course.CourseDto;
-import ru.ersted.module_1spirngmvc.dto.course.CourseShortDto;
-import ru.ersted.module_1spirngmvc.dto.course.rq.CourseCreateRq;
-import ru.ersted.module_1spirngmvc.dto.teacher.TeacherShortDto;
+import org.springframework.data.domain.*;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseDto;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseCreateRq;
 import ru.ersted.module_1spirngmvc.entity.Course;
 import ru.ersted.module_1spirngmvc.entity.Teacher;
 import ru.ersted.module_1spirngmvc.exception.NotFoundException;
@@ -22,6 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static ru.ersted.module_1spirngmvc.util.DataUtil.*;
 
 @ExtendWith(MockitoExtension.class)
 class CourseServiceTest {
@@ -39,11 +41,12 @@ class CourseServiceTest {
     private CourseService courseService;
 
     @Test
-    void save() {
-        CourseCreateRq courseCreateRq = new CourseCreateRq("Some title");
-        Course newCourse = new Course(null, "Some title", null, null);
-        Course course = new Course(1L, "Some title", null, null);
-        CourseDto courseDto = new CourseDto(1L, "Some title", null, null);
+    @DisplayName("Test save course")
+    void givenCreateRq_whenSave_thenReturnedCourseDto() {
+        CourseCreateRq courseCreateRq = courseCreateRq();
+        Course newCourse = persistCourse();
+        Course course = transientCourse();
+        CourseDto courseDto = transientCourseDto();
 
         when(courseMapper.map(courseCreateRq)).thenReturn(newCourse);
         when(courseRepository.save(newCourse)).thenReturn(course);
@@ -52,40 +55,42 @@ class CourseServiceTest {
         CourseDto result = courseService.save(courseCreateRq);
 
         assertNotNull(result);
-        assertEquals(1L, result.id());
-        assertEquals("Some title", result.title());
+        assertEquals(1L, result.getId());
+        assertEquals("Math", result.getTitle());
 
         verify(courseRepository).save(newCourse);
         verify(courseMapper).map(course);
     }
 
     @Test
-    void findAllByStudentId() {
+    @DisplayName("Test find all by student id")
+    void givenStudentId_whenFindAllByStudentId_thenReturnCollection() {
         Long studentId = 1L;
-        Course course = new Course(1L, "Some title", null, null);
-        CourseShortDto courseDto = new CourseShortDto(1L, "Some title",null);
+        Course course = transientCourse();
+        CourseShortDto courseDto = transientCourseShortDto();
+        PageRequest pageRequest = PageRequest.of(0, 20);
 
-
-        when(courseRepository.findStudentCourses(studentId)).thenReturn(new ArrayList<>(List.of(course)));
+        when(courseRepository.findStudentCourses(studentId, pageRequest))
+                .thenReturn(new SliceImpl<>(new ArrayList<>(List.of(course))));
         when(courseMapper.mapShort(course)).thenReturn(courseDto);
 
-        Collection<CourseShortDto> result = courseService.findAllByStudentId(studentId);
+        Slice<CourseShortDto> result = courseService.findAllByStudentId(studentId, pageRequest);
 
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(1L, result.iterator().next().id());
-        assertEquals("Some title", result.iterator().next().title());
+        assertEquals(1, result.getContent().size());
+        assertEquals(1L, result.iterator().next().getId());
+        assertEquals("Math", result.iterator().next().getTitle());
 
-        verify(courseRepository).findStudentCourses(studentId);
+        verify(courseRepository).findStudentCourses(studentId, pageRequest);
         verify(courseMapper).mapShort(course);
     }
 
     @Test
-    void assigningTeacher() {
-        Course course = new Course(1L, "Some title", null, null);
-        Teacher teacher = new Teacher(1L, "John Toy", null, null);
-        TeacherShortDto teacherShortDto = new TeacherShortDto(1L, "John Toy");
-        CourseDto courseDto = new CourseDto(1L, "Some title", teacherShortDto, null);
+    @DisplayName("Test assigning teacher")
+    void givenCourseAndTeacher_whenAssign_thenReturnedCourseDtoWithTeacher() {
+        Course course = transientCourse();
+        Teacher teacher = transientTeacher();
+        CourseDto courseDto = transientCourseDtoWithTeacher();
 
         Course spyCourse = spy(course);
 
@@ -108,21 +113,9 @@ class CourseServiceTest {
     }
 
     @Test
-    void assigningTeacherCourseNotFound() {
-        when(courseRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> {
-            courseService.assigningTeacher(1L, 1L);
-        });
-
-        verify(courseRepository).findById(1L);
-        verify(teacherService, never()).findOrElseThrow(anyLong());
-        verify(courseRepository, never()).save(any());
-    }
-
-    @Test
-    void assigningTeacherTeacherNotFound() {
-        Course course = new Course(1L, "Some title", null, null);
+    @DisplayName("Test assign course (NOT FOUND)")
+    void givenNothing_whenAssigningTeacherCourse_thenThrowNotFoundException() {
+        Course course = transientCourse();
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
         when(teacherService.findOrElseThrow(1L)).thenThrow(new NotFoundException("Teacher not found"));

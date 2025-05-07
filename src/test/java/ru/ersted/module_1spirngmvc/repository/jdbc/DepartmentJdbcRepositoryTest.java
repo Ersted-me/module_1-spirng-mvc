@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import ru.ersted.module_1spirngmvc.config.DatabaseConfig;
 import ru.ersted.module_1spirngmvc.entity.Department;
 
 import java.util.Map;
@@ -16,7 +17,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest
-@Import({DepartmentJdbcRepository.class})
+@Import({DatabaseConfig.class, DepartmentJdbcRepository.class})
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class DepartmentJdbcRepositoryTest {

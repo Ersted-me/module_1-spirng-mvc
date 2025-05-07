@@ -1,8 +1,9 @@
 package ru.ersted.module_1spirngmvc.repository;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import ru.ersted.module_1spirngmvc.entity.Teacher;
 
-import java.util.Collection;
 import java.util.Optional;
 
 public interface TeacherRepository {
@@ -11,7 +12,7 @@ public interface TeacherRepository {
 
     Optional<Teacher> findById(Long id);
 
-    Collection<Teacher> findAll();
+    Slice<Teacher> findAll(Pageable pageable);
 
     void deleteAll();
 

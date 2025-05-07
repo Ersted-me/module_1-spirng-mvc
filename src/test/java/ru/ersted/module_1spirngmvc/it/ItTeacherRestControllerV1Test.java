@@ -9,36 +9,34 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import ru.ersted.module_1spirngmvc.dto.teacher.rq.TeacherCreateRq;
-import ru.ersted.module_1spirngmvc.entity.Course;
-import ru.ersted.module_1spirngmvc.entity.Department;
+import ru.ersted.module_1spirngmvc.config.DatabaseConfig;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherCreateRq;
 import ru.ersted.module_1spirngmvc.entity.Student;
 import ru.ersted.module_1spirngmvc.entity.Teacher;
-import ru.ersted.module_1spirngmvc.repository.CourseRepository;
 import ru.ersted.module_1spirngmvc.repository.DepartmentRepository;
 import ru.ersted.module_1spirngmvc.repository.TeacherRepository;
+import ru.ersted.module_1spirngmvc.repository.jpa.CourseJpaRepository;
+import ru.ersted.module_1spirngmvc.repository.jpa.StudentJpaRepository;
+import ru.ersted.module_1spirngmvc.repository.jpa.TeacherJpaRepository;
 
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
-@DirtiesContext
+import static ru.ersted.module_1spirngmvc.util.DataUtil.*;
+
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-@Testcontainers
+@Import({DatabaseConfig.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-public class ItTeacherRestControllerTest {
+public class ItTeacherRestControllerV1Test {
     @Autowired
     private MockMvc mockMvc;
 
@@ -49,10 +47,16 @@ public class ItTeacherRestControllerTest {
     private TeacherRepository teacherRepository;
 
     @Autowired
-    private CourseRepository courseRepository;
+    private TeacherJpaRepository teacherJpaRepository;
+
+    @Autowired
+    private CourseJpaRepository courseRepository;
 
     @Autowired
     private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private StudentJpaRepository studentRepository;
 
     @BeforeEach
     public void setUp() {
@@ -64,39 +68,44 @@ public class ItTeacherRestControllerTest {
     @Test
     @DisplayName("Test create teacher functionality")
     void givenTeacherCreateRq_whenCreate_thenSuccessResponse() throws Exception {
-        TeacherCreateRq rq = new TeacherCreateRq("Professor Smith");
+        TeacherCreateRq rq = teacherCreateRq();
 
         ResultActions result = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/teachers")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(rq)));
 
+        int teacherId = teacherJpaRepository.findAll().iterator().next().getId().intValue();
+
         result
                 .andExpect(MockMvcResultMatchers.status().isCreated())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.notNullValue()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.name", CoreMatchers.is("Professor Smith")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.is(teacherId)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.name", CoreMatchers.is("John Toy")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.courses", CoreMatchers.is(Collections.emptyList())))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.department", CoreMatchers.nullValue()));
     }
 
     @Test
-    @Transactional
     @DisplayName("Test assigning teacher to course functionality")
     void givenTeacherIdAndCourseId_whenAssigningTeacherToCourse_thenSuccessResponse() throws Exception {
-        Student student = new Student(null, "John Doe", "example@example.example", null);
-        Course course = new Course(null, "Math 101", null, new HashSet<>(List.of(student)));
-        Teacher teacher = new Teacher(null, "Professor Smith", null, new HashSet<>(List.of(course)));
+        Student persistStudent = persistStudentWithCourse();
+        Student student = studentRepository.saveAndFlush(persistStudent);
 
-        teacherRepository.save(teacher);
+        Teacher persistTeacher = persistTeacher();
+        Teacher teacher = teacherRepository.save(persistTeacher);
 
-        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/teachers/%d/courses/%d".formatted(teacher.getId(), course.getId())));
+        int teacherId = teacher.getId().intValue();
+        int courseId = student.getCourses().iterator().next().getId().intValue();
+        int studentId = student.getId().intValue();
+
+        ResultActions result = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/teachers/%d/courses/%d".formatted(teacher.getId(), courseId)));
 
         result
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.notNullValue()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.title", CoreMatchers.is("Math 101")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.teacher.id", CoreMatchers.notNullValue()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.teacher.name", CoreMatchers.is("Professor Smith")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.students.[0].id", CoreMatchers.notNullValue()))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id", CoreMatchers.is(courseId)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.title", CoreMatchers.is("Math")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.teacher.id", CoreMatchers.is(teacherId)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.teacher.name", CoreMatchers.is("John Toy")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.students.[0].id", CoreMatchers.is(studentId)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.students.[0].name", CoreMatchers.is("John Doe")));
     }
 
@@ -104,24 +113,23 @@ public class ItTeacherRestControllerTest {
     @Transactional
     @DisplayName("Test find all teachers functionality")
     void whenFindAll_thenSuccessResponse() throws Exception {
-
-        Student student = new Student(null, "John Doe", "example@example.example", Set.of());
-        Course course = new Course(null, "Math 101", null, Set.of(student));
-        Department department = new Department(null, "Computer Science", null);
-        Teacher teacher = new Teacher(null, "Professor Smith", department, Set.of(course));
-        teacherRepository.save(teacher);
-
+        Teacher persistFilledTeacher = persistFilledTeacher();
+        Teacher teacher = teacherRepository.save(persistFilledTeacher);
 
         ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/teachers"));
 
+        int teacherId = teacher.getId().intValue();
+        int departmentId = teacher.getDepartment().getId().intValue();
+        int courseId = teacher.getCourses().iterator().next().getId().intValue();
+
         result
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].id", CoreMatchers.notNullValue()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].name", CoreMatchers.is("Professor Smith")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].courses.[0].id", CoreMatchers.notNullValue()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].courses.[0].title", CoreMatchers.is("Math 101")))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].department.id", CoreMatchers.notNullValue()))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].department.name", CoreMatchers.is("Computer Science")));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].id", CoreMatchers.is(teacherId)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].name", CoreMatchers.is("John Toy")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].courses.[0].id", CoreMatchers.is(courseId)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].courses.[0].title", CoreMatchers.is("Math")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].department.id", CoreMatchers.is(departmentId)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].department.name", CoreMatchers.is("Math Department")));
     }
 
 }

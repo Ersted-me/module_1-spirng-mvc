@@ -2,6 +2,9 @@ package ru.ersted.module_1spirngmvc.repository.jdbc;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -11,7 +14,6 @@ import ru.ersted.module_1spirngmvc.repository.TeacherRepository;
 import ru.ersted.module_1spirngmvc.repository.jdbc.mapper.CourseRowMapper;
 import ru.ersted.module_1spirngmvc.repository.jdbc.mapper.TeacherRowMapper;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -119,7 +121,7 @@ public class TeacherJdbcRepository implements TeacherRepository {
     }
 
     @Override
-    public Collection<Teacher> findAll() {
+    public Slice<Teacher> findAll(Pageable pageable) {
         String sql = """
                     SELECT
                         t.id  AS teacher_id,
@@ -129,9 +131,24 @@ public class TeacherJdbcRepository implements TeacherRepository {
                     FROM teacher t
                     LEFT JOIN department d ON d.id = t.department_id
                     ORDER BY t.id
+                    LIMIT :limit OFFSET :offset
                 """;
 
-        return jdbcTemplate.query(sql, new TeacherRowMapper());
+        int pageSize = pageable.getPageSize();
+        long offset = pageable.getOffset();
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("limit", pageSize)
+                .addValue("offset", offset);
+
+        List<Teacher> rows = jdbcTemplate.query(sql, params, new TeacherRowMapper());
+
+        boolean hasNext = rows.size() > pageSize;
+        if (hasNext) {
+            rows = rows.subList(0, pageSize);
+        }
+
+        return new SliceImpl<>(rows, pageable, hasNext);
     }
 
     @Override

@@ -1,11 +1,13 @@
 package ru.ersted.module_1spirngmvc.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.ersted.module_1spirngmvc.dto.course.CourseDto;
-import ru.ersted.module_1spirngmvc.dto.course.CourseShortDto;
-import ru.ersted.module_1spirngmvc.dto.course.rq.CourseCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseDto;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseCreateRq;
 import ru.ersted.module_1spirngmvc.entity.Course;
 import ru.ersted.module_1spirngmvc.entity.Teacher;
 import ru.ersted.module_1spirngmvc.exception.NotFoundException;
@@ -37,10 +39,9 @@ public class CourseService {
         return courseRepository.save(course);
     }
 
-    public List<CourseDto> findAll() {
-        return courseRepository.findAll().stream()
-                .map(courseMapper::map)
-                .collect(Collectors.toList());
+    public Slice<CourseDto> findAll(Pageable pageable) {
+        return courseRepository.findAll(pageable)
+                .map(courseMapper::map);
     }
 
 
@@ -49,10 +50,9 @@ public class CourseService {
                 .orElseThrow(() -> new NotFoundException("Course with ID %d not found".formatted(id)));
     }
 
-    public Collection<CourseShortDto> findAllByStudentId(Long studentId) {
-        return courseRepository.findStudentCourses(studentId).stream()
-                .map(courseMapper::mapShort)
-                .collect(Collectors.toList());
+    public Slice<CourseShortDto> findAllByStudentId(Long studentId, Pageable pageable) {
+        return courseRepository.findStudentCourses(studentId, pageable)
+                .map(courseMapper::mapShort);
     }
 
     @Transactional

@@ -1,5 +1,7 @@
 package ru.ersted.module_1spirngmvc.repository;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import ru.ersted.module_1spirngmvc.entity.Course;
 
 import java.util.Collection;
@@ -10,11 +12,11 @@ public interface CourseRepository {
 
     Course save(Course course);
 
-    List<Course> findAll();
+    Slice<Course> findAll(Pageable pageable);
 
     Optional<Course> findById(Long id);
 
-    Collection<Course> findStudentCourses(Long studentId);
+    Slice<Course> findStudentCourses(Long studentId, Pageable pageable);
 
     void deleteAll();
 

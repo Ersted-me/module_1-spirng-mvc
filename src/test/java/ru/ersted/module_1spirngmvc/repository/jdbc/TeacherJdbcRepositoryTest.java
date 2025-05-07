@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import ru.ersted.module_1spirngmvc.config.DatabaseConfig;
 import ru.ersted.module_1spirngmvc.entity.Course;
 import ru.ersted.module_1spirngmvc.entity.Department;
 import ru.ersted.module_1spirngmvc.entity.Teacher;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @JdbcTest
-@Import({TeacherJdbcRepository.class})
+@Import({DatabaseConfig.class, TeacherJdbcRepository.class})
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class TeacherJdbcRepositoryTest {
@@ -64,7 +66,7 @@ class TeacherJdbcRepositoryTest {
                 Map.of("dep", depId), Long.class);
 
 
-        Collection<Teacher> teachers = repository.findAll();
+        Collection<Teacher> teachers = repository.findAll(PageRequest.of(0, 20)).getContent();
 
         assertThat(teachers).hasSize(1);
 

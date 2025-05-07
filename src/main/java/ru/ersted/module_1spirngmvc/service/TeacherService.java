@@ -1,17 +1,16 @@
 package ru.ersted.module_1spirngmvc.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.ersted.module_1spirngmvc.dto.teacher.TeacherDto;
-import ru.ersted.module_1spirngmvc.dto.teacher.rq.TeacherCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherDto;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherCreateRq;
 import ru.ersted.module_1spirngmvc.entity.Teacher;
 import ru.ersted.module_1spirngmvc.exception.NotFoundException;
 import ru.ersted.module_1spirngmvc.mapper.TeacherMapper;
 import ru.ersted.module_1spirngmvc.repository.TeacherRepository;
-
-import java.util.Collection;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,10 +34,9 @@ public class TeacherService {
                 .orElseThrow(() -> new NotFoundException("Teacher with ID %d not found".formatted(id)));
     }
 
-    public Collection<TeacherDto> findAll() {
-        return teacherRepository.findAll().stream()
-                .map(teacherMapper::map)
-                .collect(Collectors.toList());
+    public Slice<TeacherDto> findAll(Pageable pageable) {
+        return teacherRepository.findAll(pageable)
+                .map(teacherMapper::map);
     }
 
 }

@@ -7,27 +7,29 @@ import org.junit.jupiter.api.Test;
 import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import ru.ersted.module_1spirngmvc.dto.course.CourseDto;
-import ru.ersted.module_1spirngmvc.dto.course.rq.CourseCreateRq;
-import ru.ersted.module_1spirngmvc.dto.student.StudentDto;
-import ru.ersted.module_1spirngmvc.dto.student.StudentShortDto;
-import ru.ersted.module_1spirngmvc.dto.teacher.TeacherShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseDto;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.TeacherShortDto;
 import ru.ersted.module_1spirngmvc.service.CourseService;
+import ru.ersted.module_1spirngmvc.util.DataUtil;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static ru.ersted.module_1spirngmvc.util.DataUtil.*;
 
-@WebMvcTest(controllers = CourseRestController.class)
-class CourseRestControllerTest {
+@WebMvcTest(controllers = CourseRestControllerV1.class)
+class CourseRestControllerV1Test {
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,8 +44,8 @@ class CourseRestControllerTest {
     @Test
     @DisplayName("Test create course functionality")
     void givenCourseCreteRq_whenCreateCourse_thenSuccessResponse() throws Exception {
-        CourseCreateRq rq = new CourseCreateRq("Math");
-        CourseDto dto = new CourseDto(1L, "Math", null, null);
+        CourseCreateRq rq = courseCreateRq();
+        CourseDto dto = transientCourseDto();
 
         BDDMockito.given(courseService.save(rq)).willReturn(dto);
 
@@ -62,11 +64,9 @@ class CourseRestControllerTest {
     @Test
     @DisplayName("Test find all courses functionality")
     void whenFindAll_thenSuccessResponse() throws Exception {
-        TeacherShortDto teacher = new TeacherShortDto(1L, "Professor Smith");
-        StudentShortDto student = new StudentShortDto(1L, "John Doe");
-        List<CourseDto> list = Collections.singletonList(new CourseDto(1L, "Math", teacher, Set.of(student)));
+        List<CourseDto> list = Collections.singletonList(transientFilledCourseDto());
 
-        BDDMockito.given(courseService.findAll()).willReturn(list);
+        BDDMockito.given(courseService.findAll(PageRequest.of(0, 20))).willReturn(new SliceImpl<>(list));
 
         ResultActions result = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/courses"));
 
@@ -75,7 +75,7 @@ class CourseRestControllerTest {
                 .andExpect(MockMvcResultMatchers.jsonPath("$.[0].id", CoreMatchers.is(1)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.[0].title", CoreMatchers.is("Math")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.[0].teacher.id", CoreMatchers.is(1)))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].teacher.name", CoreMatchers.is("Professor Smith")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.[0].teacher.name", CoreMatchers.is("John Toy")))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.[0].students.[0].id", CoreMatchers.is(1)))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.[0].students.[0].name", CoreMatchers.is("John Doe")));
     }

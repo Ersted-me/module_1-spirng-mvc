@@ -1,6 +1,9 @@
 package ru.ersted.module_1spirngmvc.repository.jdbc;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -9,7 +12,10 @@ import ru.ersted.module_1spirngmvc.entity.Student;
 import ru.ersted.module_1spirngmvc.repository.CourseRepository;
 import ru.ersted.module_1spirngmvc.repository.jdbc.mapper.CourseRowMapper;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -37,7 +43,7 @@ public class CourseJdbcRepository implements CourseRepository {
     }
 
     @Override
-    public List<Course> findAll() {
+    public Slice<Course> findAll(Pageable pageable) {
         String sqlCourses = """
                 SELECT
                     c.id          AS course_id,
@@ -47,16 +53,23 @@ public class CourseJdbcRepository implements CourseRepository {
                 FROM course c
                 LEFT JOIN teacher t ON t.id = c.teacher_id
                 ORDER BY c.id
+                LIMIT :limit OFFSET :offset
                 """;
-        List<Course> courses = jdbcTemplate.query(sqlCourses, Map.of(), new CourseRowMapper());
 
-        if (!courses.isEmpty()) {
-            findCoursesStudents(courses);
+        int pageSize = pageable.getPageSize();
+        long offset = pageable.getOffset();
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("limit", pageSize)
+                .addValue("offset", offset);
+
+        Slice<Course> pageableCourses = getPageableCourses(pageable, sqlCourses, pageSize, params);
+
+        if(!pageableCourses.getContent().isEmpty()) {
+            findCoursesStudents(pageableCourses.getContent());
         }
 
-        return courses.isEmpty()
-                ? Collections.emptyList()
-                : courses;
+        return pageableCourses;
     }
 
     private void findCoursesStudents(List<Course> courses) {
@@ -115,7 +128,7 @@ public class CourseJdbcRepository implements CourseRepository {
     }
 
     @Override
-    public Collection<Course> findStudentCourses(Long studentId) {
+    public Slice<Course> findStudentCourses(Long studentId, Pageable pageable) {
         String sql = """
                     SELECT
                         c.id    AS course_id,
@@ -127,8 +140,30 @@ public class CourseJdbcRepository implements CourseRepository {
                     LEFT JOIN teacher t ON t.id = c.teacher_id
                     WHERE sc.student_id = :studentId
                     ORDER BY c.id
+                    LIMIT :limit OFFSET :offset
                 """;
-        return jdbcTemplate.query(sql, Map.of("studentId", studentId), new CourseRowMapper());
+
+        int pageSize = pageable.getPageSize();
+        long offset = pageable.getOffset();
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("limit", pageSize)
+                .addValue("offset", offset)
+                .addValue("studentId", studentId);
+
+        return getPageableCourses(pageable, sql, pageSize, params);
+    }
+
+
+    private Slice<Course> getPageableCourses(Pageable pageable, String sql, int pageSize, MapSqlParameterSource params) {
+        List<Course> rows = jdbcTemplate.query(sql, params, new CourseRowMapper());
+
+        boolean hasNext = rows.size() > pageSize;
+        if (hasNext) {
+            rows = rows.subList(0, pageSize);
+        }
+
+        return new SliceImpl<>(rows, pageable, hasNext);
     }
 
     @Override

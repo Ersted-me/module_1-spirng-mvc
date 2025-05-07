@@ -1,14 +1,15 @@
 package ru.ersted.module_1spirngmvc.service;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.ersted.module_1spirngmvc.dto.course.CourseShortDto;
-import ru.ersted.module_1spirngmvc.dto.student.StudentDto;
-import ru.ersted.module_1spirngmvc.dto.student.rq.StudentCreateRq;
-import ru.ersted.module_1spirngmvc.dto.student.rq.StudentUpdateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentDto;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentUpdateRq;
 import ru.ersted.module_1spirngmvc.entity.Course;
 import ru.ersted.module_1spirngmvc.entity.Student;
 import ru.ersted.module_1spirngmvc.exception.NotFoundException;
@@ -26,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static ru.ersted.module_1spirngmvc.util.DataUtil.*;
+import static ru.ersted.module_1spirngmvc.util.DataUtil.transientStudent;
 
 @ExtendWith(MockitoExtension.class)
 class StudentServiceTest {
@@ -44,11 +47,12 @@ class StudentServiceTest {
 
 
     @Test
-    void testCreateStudent() {
+    @DisplayName("given valid create request when create then returns saved StudentDto")
+    void givenValidStudentCreateRequest_whenCreate_thenReturnStudentDto() {
 
-        StudentCreateRq studentCreateRq = new StudentCreateRq("John Doe", "john.doe@example.com");
-        Student student = new Student(1L, "John Doe", "john.doe@example.com", new HashSet<>());
-        StudentDto studentDto = new StudentDto(1L, "John Doe", "john.doe@example.com", new HashSet<>());
+        StudentCreateRq studentCreateRq = studentCreateRq();
+        Student student = transientStudent();
+        StudentDto studentDto = transientStudentDto();
 
         when(studentMapper.map(studentCreateRq)).thenReturn(student);
         when(studentRepository.save(student)).thenReturn(student);
@@ -57,8 +61,8 @@ class StudentServiceTest {
         StudentDto result = studentService.create(studentCreateRq);
 
         assertNotNull(result);
-        assertEquals(studentDto.name(), result.name());
-        assertEquals(studentDto.email(), result.email());
+        assertEquals(studentDto.getName(), result.getName());
+        assertEquals(studentDto.getEmail(), result.getEmail());
 
         verify(studentMapper).map(studentCreateRq);
         verify(studentRepository).save(student);
@@ -66,9 +70,10 @@ class StudentServiceTest {
     }
 
     @Test
-    void findAllStudents() {
-        Student student = new Student(1L, "John Doe", "john.doe@example.com", new HashSet<>());
-        StudentDto dto = new StudentDto(1L, "John Doe", "john.doe@example.com", new HashSet<>());
+    @DisplayName("given existing students when findAll then returns all StudentDto")
+    void givenExistingStudents_whenFindAll_thenReturnAllStudents() {
+        Student student = transientStudent();
+        StudentDto dto = transientStudentDto();
         Set<Student> students = Set.of(student);
         Set<StudentDto> dtos = Set.of(dto);
 
@@ -85,9 +90,10 @@ class StudentServiceTest {
     }
 
     @Test
-    void findStudent() {
-        Student student = new Student(1L, "John Doe", "john.doe@example.com", new HashSet<>());
-        StudentDto dto = new StudentDto(1L, "John Doe", "john.doe@example.com", new HashSet<>());
+    @DisplayName("given existing student when find then returns StudentDto")
+    void givenExistingStudent_whenFind_thenReturnStudentDto() {
+        Student student = transientStudent();
+        StudentDto dto = transientStudentDto();
 
         when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
         when(studentMapper.map(student)).thenReturn(dto);
@@ -95,17 +101,18 @@ class StudentServiceTest {
         StudentDto result = studentService.find(1L);
 
         assertNotNull(result);
-        assertEquals(result, dto);
+        assertEquals(dto, result);
 
         verify(studentMapper).map(student);
         verify(studentRepository).findById(1L);
     }
 
     @Test
-    void testUpdateStudent() {
-        Student student = new Student(1L, "John Doe", "john.doe@example.com", new HashSet<>());
-        StudentDto studentDto = new StudentDto(1L, "Johnathan Doe", "johnathan.doe@example.com", new HashSet<>());
-        StudentUpdateRq studentUpdateRq = new StudentUpdateRq("Johnathan Doe", "johnathan.doe@example.com");
+    @DisplayName("given existing student and update request when update then updates student and returns StudentDto")
+    void givenExistingStudentAndUpdateRequest_whenUpdate_thenStudentUpdatedAndDtoReturned() {
+        Student student = transientStudent();
+        StudentDto studentDto = transientStudentDtoJohnathan();
+        StudentUpdateRq studentUpdateRq = studentUpdateRq();
 
         when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
         when(studentMapper.map(student)).thenReturn(studentDto);
@@ -115,8 +122,8 @@ class StudentServiceTest {
 
         assertNotNull(result);
         assertEquals(studentDto, result);
-        assertEquals(studentUpdateRq.email(), result.email());
-        assertEquals(studentUpdateRq.name(), result.name());
+        assertEquals(studentUpdateRq.getEmail(), result.getEmail());
+        assertEquals(studentUpdateRq.getName(), result.getName());
 
         verify(studentRepository).findById(1L);
         verify(studentRepository).save(student);
@@ -124,23 +131,24 @@ class StudentServiceTest {
     }
 
     @Test
-    void testUpdateStudentNotFound() {
-        StudentUpdateRq studentUpdateRq = new StudentUpdateRq("Johnathan Doe", "johnathan.doe@example.com");
+    @DisplayName("given non-existing student when update then throws NotFoundException")
+    void givenNonExistingStudent_whenUpdate_thenThrowsNotFoundException() {
+        StudentUpdateRq studentUpdateRq = studentUpdateRq();
 
         when(studentRepository.findById(1L)).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
-            studentService.update(1L, studentUpdateRq);
-        });
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> studentService.update(1L, studentUpdateRq));
 
         assertEquals("Student with ID 1 not found", exception.getMessage());
 
         verify(studentRepository).findById(1L);
-        verify(studentRepository, never()).save(any()); // Метод save не должен быть вызван
+        verify(studentRepository, never()).save(any());
     }
 
     @Test
-    void delete() {
+    @DisplayName("given student ID when delete then repository.deleteById is called once")
+    void givenStudentId_whenDelete_thenRepositoryDeleteByIdCalled() {
         Long studentId = 1L;
 
         studentService.delete(studentId);
@@ -149,11 +157,12 @@ class StudentServiceTest {
     }
 
     @Test
-    void addCourse() {
-        Student student = new Student(1L, "John Doe", "john.doe@example.com", new HashSet<>());
-        Course course = new Course(1L, "Some course", null, null);
-        CourseShortDto courseDto = new CourseShortDto(1L, "Some course", null);
-        StudentDto studentDto = new StudentDto(1L, "Johnathan Doe", "johnathan.doe@example.com", Set.of(courseDto));
+    @DisplayName("given student and course when addCourse then associates course and returns StudentDto")
+    void givenStudentAndCourse_whenAddCourse_thenCourseAssociated() {
+        Student student = transientStudent();
+        Course course = transientCourse();
+        CourseShortDto courseDto = transientCourseShortDto();
+        StudentDto studentDto = transientFilledStudentDto();
 
         when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
         when(courseService.findOrElseThrow(1L)).thenReturn(course);

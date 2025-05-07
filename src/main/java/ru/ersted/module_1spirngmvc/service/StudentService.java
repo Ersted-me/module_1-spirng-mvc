@@ -3,9 +3,9 @@ package ru.ersted.module_1spirngmvc.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.ersted.module_1spirngmvc.dto.student.StudentDto;
-import ru.ersted.module_1spirngmvc.dto.student.rq.StudentCreateRq;
-import ru.ersted.module_1spirngmvc.dto.student.rq.StudentUpdateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentDto;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.StudentUpdateRq;
 import ru.ersted.module_1spirngmvc.entity.Course;
 import ru.ersted.module_1spirngmvc.entity.Student;
 import ru.ersted.module_1spirngmvc.exception.NotFoundException;
@@ -52,7 +52,9 @@ public class StudentService {
     public StudentDto update(Long id, StudentUpdateRq request) {
         Student foundStudent = findOrElseThrow(id);
 
-        foundStudent.update(request);
+        foundStudent.setName(request.getName());
+        foundStudent.setEmail(request.getEmail());
+
         studentRepository.save(foundStudent);
 
         return studentMapper.map(foundStudent);

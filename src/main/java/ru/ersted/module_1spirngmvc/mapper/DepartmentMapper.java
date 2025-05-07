@@ -1,9 +1,9 @@
 package ru.ersted.module_1spirngmvc.mapper;
 
 import org.mapstruct.Mapper;
-import ru.ersted.module_1spirngmvc.dto.department.DepartmentDto;
-import ru.ersted.module_1spirngmvc.dto.department.DepartmentShortDto;
-import ru.ersted.module_1spirngmvc.dto.department.rq.DepartmentCreateRq;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentDto;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.DepartmentCreateRq;
 import ru.ersted.module_1spirngmvc.entity.Department;
 
 @Mapper(componentModel = "spring")
