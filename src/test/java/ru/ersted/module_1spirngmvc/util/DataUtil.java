@@ -2,6 +2,7 @@ package ru.ersted.module_1spirngmvc.util;
 
 import ru.ersted.module_1spirngmvc.dto.generated.CourseDto;
 import ru.ersted.module_1spirngmvc.dto.generated.CourseShortDto;
+import ru.ersted.module_1spirngmvc.dto.generated.CourseBasicDto;
 import ru.ersted.module_1spirngmvc.dto.generated.CourseCreateRq;
 import ru.ersted.module_1spirngmvc.dto.generated.DepartmentDto;
 import ru.ersted.module_1spirngmvc.dto.generated.DepartmentShortDto;
@@ -58,7 +59,7 @@ public class DataUtil {
         TeacherDto dto = new TeacherDto();
         dto.setId(1L);
         dto.setName("John Toy");
-        dto.courses(Set.of(transientCourseShortDto()));
+        dto.courses(Set.of(transientCourseBasicDto()));
         dto.department(departmentShortDto());
 
         return dto;
@@ -176,6 +177,13 @@ public class DataUtil {
         dto.setId(1L);
         dto.setTitle("Math");
         dto.teacher(transientTeacherShortDto());
+        return dto;
+    }
+
+    public static CourseBasicDto transientCourseBasicDto() {
+        CourseBasicDto dto = new CourseBasicDto();
+        dto.setId(1L);
+        dto.setTitle("Math");
         return dto;
     }
 

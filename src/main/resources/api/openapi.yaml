@@ -30,6 +30,18 @@ components:
           $ref: '#/components/schemas/TeacherShortDto'
           nullable: true
 
+    CourseBasicDto:
+      type: object
+      required: [ id, title ]
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+          maxLength: 255
+
+
     CourseDto:
       type: object
       required: [id, title]
@@ -170,7 +182,7 @@ components:
           type: array
           uniqueItems: true
           items:
-            $ref: '#/components/schemas/CourseShortDto'
+            $ref: '#/components/schemas/CourseBasicDto'
           nullable: true
           default: []
         department:
